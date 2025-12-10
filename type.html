@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Typing Test - UjwalType</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 2rem;
+      color: #38bdf8;
+    }
+
+    #word-container {
+      max-width: 800px;
+      font-size: 1.5rem;
+      line-height: 2.5rem;
+      margin-bottom: 2rem;
+      user-select: none;
+    }
+
+    .word {
+      margin-right: 10px;
+    }
+
+    .char {
+      display: inline-block;
+      transition: all 0.1s ease;
+    }
+
+    .correct {
+      color: #22c55e;
+    }
+
+    .incorrect {
+      color: #ef4444;
+      text-decoration: underline;
+    }
+
+    #input {
+      width: 100%;
+      max-width: 800px;
+      padding: 0.8rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+      background-color: #1e293b;
+      color: #f1f5f9;
+    }
+
+    #stats {
+      margin-top: 2rem;
+      font-size: 1rem;
+      color: #94a3b8;
+    }
+
+    #restart {
+      margin-top: 1rem;
+      padding: 0.6rem 1.2rem;
+      background-color: #38bdf8;
+      border: none;
+      border-radius: 5px;
+      color: #0f172a;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #restart:hover {
+      background-color: #0ea5e9;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>UjwalType</h1>
+  <div id="word-container"></div>
+  <input type="text" id="input" autocomplete="off" spellcheck="false" />
+  <div id="stats">
+    <p>WPM: <span id="wpm">0</span> | Accuracy: <span id="accuracy">100</span>%</p>
+  </div>
+  <button id="restart">Restart</button>
+
+  <script>
+    const wordContainer = document.getElementById('word-container');
+    const input = document.getElementById('input');
+    const wpmDisplay = document.getElementById('wpm');
+    const accuracyDisplay = document.getElementById('accuracy');
+    const restartBtn = document.getElementById('restart');
+
+    const WORD_COUNT = 60;
+    const words = `time world day life hand part child eye woman place work week case point government company group problem fact night home water room mother area money story`.split(" ");
+    let currentIndex = 0;
+    let startTime;
+    let correct = 0, incorrect = 0;
+    let wordSpans = [];
+
+    function generateWords() {
+      wordContainer.innerHTML = '';
+      currentIndex = 0;
+      correct = 0;
+      incorrect = 0;
+      input.value = '';
+      const generated = [];
+      for (let i = 0; i < WORD_COUNT; i++) {
+        generated.push(words[Math.floor(Math.random() * words.length)]);
+      }
+      generated.forEach(word => {
+        const wordEl = document.createElement('span');
+        wordEl.className = 'word';
+        word.split('').forEach(char => {
+          const charSpan = document.createElement('span');
+          charSpan.className = 'char';
+          charSpan.textContent = char;
+          wordEl.appendChild(charSpan);
+        });
+        wordContainer.appendChild(wordEl);
+      });
+      wordSpans = document.querySelectorAll('.word');
+      wordSpans[0].classList.add('active');
+    }
+
+    input.addEventListener('input', () => {
+      const currentWordSpan = wordSpans[currentIndex];
+      const typedValue = input.value;
+      const charSpans = currentWordSpan.querySelectorAll('.char');
+
+      if (!startTime) startTime = new Date();
+
+      charSpans.forEach((charSpan, idx) => {
+        const typedChar = typedValue[idx];
+        if (typedChar == null) {
+          charSpan.classList.remove('correct', 'incorrect');
+        } else if (typedChar === charSpan.textContent) {
+          charSpan.classList.add('correct');
+          charSpan.classList.remove('incorrect');
+        } else {
+          charSpan.classList.add('incorrect');
+          charSpan.classList.remove('correct');
+        }
+      });
+
+      if (typedValue.endsWith(' ')) {
+        const actualWord = [...charSpans].map(c => c.textContent).join('');
+        const typedWord = typedValue.trim();
+
+        if (typedWord === actualWord) correct++;
+        else incorrect++;
+
+        currentWordSpan.classList.remove('active');
+        currentIndex++;
+        if (currentIndex < wordSpans.length) {
+          wordSpans[currentIndex].classList.add('active');
+        } else {
+          finishTest();
+        }
+
+        input.value = '';
+      }
+
+      updateStats();
+    });
+
+    function updateStats() {
+      const elapsedTime = (new Date() - startTime) / 60000; // in minutes
+      const totalTyped = correct + incorrect;
+      const wpm = Math.round(correct / elapsedTime || 0);
+      const accuracy = Math.round((correct / (totalTyped || 1)) * 100);
+
+      wpmDisplay.textContent = wpm;
+      accuracyDisplay.textContent = accuracy;
+    }
+
+    function finishTest() {
+      input.disabled = true;
+    }
+
+    restartBtn.addEventListener('click', () => {
+      input.disabled = false;
+      startTime = null;
+      generateWords();
+      updateStats();
+      input.focus();
+    });
+
+    generateWords();
+    input.focus();
+  </script>
+</body>
+</html>
